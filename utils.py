@@ -54,6 +54,8 @@ def image(field, setup):
     
     # number of samples for the aperture: (A / L_a) * N
     A_samples = int((A / L_a) * N)
+    if A_samples % 2 == 1:
+        A_samples += 1
     # mask consists of A_samples ones in the middle of a bed of N zeros
     n_zeros = int((N - A_samples)/2)
     mask = np.concatenate((np.zeros(n_zeros), np.ones(A_samples), np.zeros(n_zeros)))
