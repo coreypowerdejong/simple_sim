@@ -5,6 +5,10 @@ from matplotlib import pyplot as plt
 def gauss_1d(x, mu, sigma):
     return np.exp(-((x - mu) * (x - mu) / (2 * sigma * sigma)))
 
+def gauss_1d_fwhm(x, mu, fwhm):
+    sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+    return gauss_1d(x, mu, sigma)
+
 def test_sum(n_samples, n_cycles=1, a=1, mu=None, sigma=0.1):
     x = np.arange(n_samples)
     if mu == None:
