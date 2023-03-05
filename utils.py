@@ -92,3 +92,22 @@ def image(field, setup):
     
     return out
     
+def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3, a=1):
+    '''
+    Returns an array of LED fields.
+    inputs:
+        n_leds: number of LEDs
+        n_samples: number of samples in each LED field
+        size: size of the LED array in meters
+        spacing: spacing between LEDs in meters
+        fwhm: full width at half maximum of the LED field in meters
+        a: amplitude of the LED field
+    returns:
+        2D array of complex field values
+    '''
+    x = np.arange(n_samples, dtype=np.complex128)
+    w_samples = int((fwhm / size) * n_samples)
+    for i in range(n_leds):
+        mu = i * 2 * spacing * n_samples / size
+        out = a*gauss_1d_fwhm(x, mu, w_samples)
+        yield out
