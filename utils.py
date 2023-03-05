@@ -10,7 +10,7 @@ def gauss_1d_fwhm(x, mu, fwhm):
     return gauss_1d(x, mu, sigma)
 
 def test_sum(n_samples, n_cycles=1, a=1, mu=None, sigma=0.1):
-    x = np.arange(n_samples)
+    x = np.arange(n_samples, dtype=np.complex128)
     if mu == None:
         mu = n_samples/2
     freq = n_cycles / n_samples
