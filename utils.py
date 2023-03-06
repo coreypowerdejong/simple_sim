@@ -111,3 +111,13 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
         mu = i * 2 * spacing * n_samples / size
         out = a*gauss_1d_fwhm(x, mu, w_samples)
         yield out
+
+def propogate_field(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
+    # compute coordinates for x_out
+    kx = np.fft.fftfreq(n_samples, d=size/n_samples) # spatial frequencies
+    kx = np.fft.fftshift(kx)*lambda_0*z
+    
+    # propogate field using fourier transform
+    x_out = fftshift(fft(x_in))
+    
+    return x_out, kx
