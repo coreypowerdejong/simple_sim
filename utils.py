@@ -107,7 +107,7 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
     '''
     x = np.arange(n_samples, dtype=np.complex128)
     w_samples = int((fwhm / size) * n_samples)
-    for i in range(n_leds):
+    for i in range(1, n_leds):
         mu = i * 2 * spacing * n_samples / size
         out = a*gauss_1d_fwhm(x, mu, w_samples)
         yield out
