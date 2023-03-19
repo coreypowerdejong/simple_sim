@@ -107,10 +107,11 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
     '''
     x = np.arange(n_samples, dtype=np.complex128)
     w_samples = int((fwhm / size) * n_samples)
-    for i in range(1, n_leds):
-        mu = i * 2 * spacing * n_samples / size
+    center = int(n_samples/2)
+    positions = [center] + [center + ((-1)**(i+1)*np.ceil(i/2)*spacing*n_samples/(2*size)) for i in range(1, n_leds)]
+    for mu in positions: # positions are modelled as the mean of the gaussian
         out = a*gauss_1d_fwhm(x, mu, w_samples)
-        yield out
+        yield out 
 
 def propogate_field(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     # compute coordinates for x_out
