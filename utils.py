@@ -23,6 +23,13 @@ def intensity(field):
 def mse(a, b):
     return np.mean((a - b)**2)
 
+def center_splice(destination, source):
+    """Replace the center of destination with source."""
+    d = len(destination)
+    s = len(source)
+    destination[d//2-s//2:d//2+s//2] = source
+    return destination
+    
 def image(field, setup):
     '''
     Returns the image of a field through a 4F lens setup.
