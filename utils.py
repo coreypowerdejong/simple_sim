@@ -2,6 +2,8 @@ import numpy as np
 from numpy.fft import fft, fftshift, ifft, ifftshift
 from matplotlib import pyplot as plt
 
+golomb = np.array([1, 4, 10, 12, 17]) # Golomb ruler sequence
+
 def gauss_1d(x, mu, sigma):
     return np.exp(-((x - mu) * (x - mu) / (2 * sigma * sigma)))
 
@@ -13,8 +15,12 @@ def test_sum(n_samples, n_cycles=1, a=1, mu=None, sigma=0.1):
     x = np.arange(n_samples, dtype=np.complex128)
     if mu == None:
         mu = n_samples/2
-    freq = n_cycles / n_samples
-    out = 0.5*a*(np.cos(2*np.pi * x * freq))**2 + 0.5*a*gauss_1d(x, mu, n_samples * sigma)
+        
+    freq = n_cycles / n_samples * golomb/golomb[-1]
+    out = np.zeros(n_samples, dtype=np.complex128)
+    for i, f in enumerate(freq):
+        out += (0.5/(i+1))*a*(np.cos(2*np.pi * x * f))**2 # amplitude gets lower as frequency gets higher
+    out += a*gauss_1d(x, mu, n_samples * sigma)
     return out
 
 def intensity(field):
