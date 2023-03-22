@@ -91,17 +91,17 @@ def image(field, setup):
     if plot:
         x_mm = np.linspace(-L/2, L/2, N) * 1000
         kx_mm = kx * 1000 # mm
-        _, axs = plt.subplots(5, 1, figsize=(20, 15))
+        _, axs = plt.subplots(4, 1, figsize=(20, 13))
         axs[0].plot(x_mm, intensity(field))
         axs[0].set_xlabel('input field, mm')
         axs[1].plot(kx_mm, intensity(A_field))
         axs[1].set_xlabel('aperture field, mm')
-        axs[2].plot(kx_mm, mask)
-        axs[2].set_xlabel('mask, mm')
-        axs[3].plot(kx_mm, intensity(masked))
-        axs[3].set_xlabel('aperture field (masked), mm')
-        axs[4].plot(kx_o_mm, intensity(out))
-        axs[4].set_xlabel('output field, mm')
+        axs[1].axvline(-A/2*1000, color='r')
+        axs[1].axvline(A/2*1000, color='r')
+        axs[2].plot(kx_mm, intensity(masked))
+        axs[2].set_xlabel('aperture field (masked), mm')
+        axs[3].plot(kx_o_mm, intensity(out))
+        axs[3].set_xlabel('output field, mm')
     
     return out
     
