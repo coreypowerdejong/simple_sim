@@ -104,6 +104,9 @@ def image(field, setup):
         axs[3].set_xlabel('output field, mm')
     
     return out
+
+def led_units(n_samples=5000, size=223e-3):
+    return np.linspace(-size/2, size/2, n_samples)
     
 def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3, a=1):
     '''
@@ -121,14 +124,12 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
     x = np.arange(n_samples, dtype=np.complex128)
     w_samples = int((fwhm / size) * n_samples)
     center = int(n_samples/2)
-    positions = [center] + [center + ((-1)**(i+1)*np.ceil(i/2)*spacing*n_samples/(size)) for i in range(1, n_leds)]
-    
-    # units for LED array
-    out_units = np.linspace(-size/2, size/2, n_samples)
-
-    for mu in positions: # positions are modelled as the mean of the gaussian
+    index = np.array([(-1)**(i+1)*np.ceil(i/2) for i in range(1, n_leds)])
+    positions = [center] + (center + index*spacing*n_samples/(size)).tolist()
+    index = [0] + index.tolist()
+    for idx, mu in zip(index, positions): # positions are modelled as the mean of the gaussian
         out = a*gauss_1d_fwhm(x, mu, w_samples)
-        yield out, out_units
+        yield idx, out
 
 def propogate_field(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     # compute coordinates for x_out
