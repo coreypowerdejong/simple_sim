@@ -140,3 +140,11 @@ def propogate_field(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     x_out = fftshift(fft(x_in))
     
     return x_out, kx
+
+# write a function which converts a an array of complex numbers in rectangular form to polar form
+def rect_to_polar(x):
+    return np.abs(x), np.angle(x)
+
+# write a function which converts a an array of complex numbers in polar form to rectangular form
+def polar_to_rect(r, theta):
+    return r*np.exp(1j*theta)
