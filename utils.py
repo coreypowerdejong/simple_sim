@@ -78,7 +78,7 @@ def image(field, setup):
     mask = np.concatenate((np.zeros(n_zeros), np.ones(A_samples), np.zeros(n_zeros)))
     
     # compute aperture field and apply mask
-    A_field = fftshift(fft(field, norm="ortho"))
+    A_field = fftshift(fft(fftshift(field), norm="ortho"))
     masked = A_field * mask
     
     # compute coordinates for image field
@@ -86,7 +86,7 @@ def image(field, setup):
     kx_o = np.fft.fftshift(kx_o)*lambda_0*f2
     kx_o_mm = kx_o * 1000 # mm
     
-    out = ifft(ifftshift(masked), norm='ortho')
+    out = ifftshift(ifft(ifftshift(masked), norm='ortho'))
     
     if plot:
         x_mm = np.linspace(-L/2, L/2, N) * 1000
@@ -137,7 +137,7 @@ def propogate_field(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     kx = np.fft.fftshift(kx)*lambda_0*z
     
     # propogate field using fourier transform
-    x_out = fftshift(fft(x_in))
+    x_out = fftshift(fft(fftshift(x_in)))
     
     return x_out, kx
 
