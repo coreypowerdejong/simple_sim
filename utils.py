@@ -73,16 +73,14 @@ def image(field, setup):
     A_samples = int((A / L_a) * N)
     if A_samples % 2 == 1:
         A_samples += 1
-    # mask consists of A_samples ones in the middle of a bed of N zeros
-    n_zeros = int((N - A_samples)/2)
-    mask = np.concatenate((np.zeros(n_zeros), np.ones(A_samples), np.zeros(n_zeros)))
-    
+        
+    # mask consists of A_samples from the middle of the aperture field
     # compute aperture field and apply mask
     A_field = fftshift(fft(fftshift(field), norm="ortho"))
-    masked = A_field * mask
+    masked = A_field[len(A_field)//2 - A_samples//2:len(A_field)//2 + A_samples//2]
     
     # compute coordinates for image field
-    kx_o = np.fft.fftfreq(N, d=L_a/N)
+    kx_o = np.fft.fftfreq(len(kx), d=A/len(kx))
     kx_o = np.fft.fftshift(kx_o)*lambda_0*f2
     kx_o_mm = kx_o * 1000 # mm
     
@@ -91,16 +89,16 @@ def image(field, setup):
     if plot:
         x_mm = np.linspace(-L/2, L/2, N) * 1000
         kx_mm = kx * 1000 # mm
-        _, axs = plt.subplots(4, 1, figsize=(20, 13))
+        _, axs = plt.subplots(4, 1, figsize=(10, 13))
         axs[0].plot(x_mm, intensity(field))
         axs[0].set_xlabel('input field, mm')
         axs[1].plot(kx_mm, intensity(A_field))
         axs[1].set_xlabel('aperture field, mm')
         axs[1].axvline(-A/2*1000, color='r')
         axs[1].axvline(A/2*1000, color='r')
-        axs[2].plot(kx_mm, intensity(masked))
+        axs[2].plot(kx_mm[len(kx_mm)//2-A_samples//2:len(kx_mm)//2+A_samples//2], intensity(masked))
         axs[2].set_xlabel('aperture field (masked), mm')
-        axs[3].plot(kx_o_mm, intensity(out))
+        axs[3].plot(kx_o_mm[len(kx_o_mm)//2-A_samples//2:len(kx_o_mm)//2+A_samples//2], intensity(out))
         axs[3].set_xlabel('output field, mm')
     
     return out
