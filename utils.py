@@ -205,3 +205,8 @@ def reconstruct_gs(images, offset, target_resolution, n_iterations=3):
             hr_spectrum[target_resolution//2 - img_len//2 - int(idx*offset):target_resolution//2 + img_len//2 - int(idx*offset)] = fftshift(fft(fftshift(target)))
 
     return hr_spectrum
+
+def normalize(x):
+    """Normalizes a field to have a maximum absolute value of 1."""
+    
+    return x / np.max(np.abs(x))
