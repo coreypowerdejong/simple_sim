@@ -141,6 +141,19 @@ def propagate_fft(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     
     return x_out, kx
 
+def propagate_fresnel(x_in, n_samples, size, lambda_0=650e-9, z=0.08):
+    """Propagates a field using the Fresnel approximation."""
+    
+    x_units = np.linspace(-size/2, size/2, n_samples)
+    # compute coordinates for x_out
+    kx = fftshift(np.fft.fftfreq(n_samples, d=size/n_samples)) # spatial frequencies
+    kx_out = kx*lambda_0*z
+    ft_x_in = fftshift(fft(fftshift(x_in*np.exp((1j*np.pi*x_units**2)/lambda_0*z))))
+    # propogate field using Fresnel approximation
+    x_out = np.exp((1j*np.pi*kx_out**2)/lambda_0*z) * ft_x_in
+    
+    return x_out, kx_out
+    
 def rect_to_polar(x):
     """Converts rectangular coordinates to polar coordinates."""
     
