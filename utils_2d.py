@@ -42,7 +42,7 @@ def center_cut_2d(source, size, center=None):
     if center == None:
         center = (sx//2, sy//2)
     
-    return source[center[0] - size//2:center[0] + size//2, center[1] - size//2:center[1] + size//2]
+    return source[int(center[0] - size//2):int(center[0] + size//2), int(center[1] - size//2):int(center[1] + size//2)]
 
 def get_circular_mask(N, size, center, radius):
     """
@@ -62,7 +62,7 @@ def get_circular_mask(N, size, center, radius):
     mask = (xx - center[0])**2 + (yy - center[1])**2 <= radius**2
     return np.nonzero(mask)
 
-def image_2D(field, setup):
+def image_2d(field, setup):
     '''
     Returns the image of a field through a 4F lens setup.
     The input field must be a square matrix.
@@ -142,7 +142,7 @@ def image_2D(field, setup):
 def led_units(n_samples=5000, size=223e-3):
     return np.linspace(-size/2, size/2, n_samples)
     
-def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3, a=1):
+def led_array_2d(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3, a=1):
     '''
     Returns an array of LED fields.
     inputs:
@@ -157,6 +157,7 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
     '''
     x = np.arange(n_samples, dtype=np.complex128)
     y = np.arange(n_samples, dtype=np.complex128)
+    xx, yy = np.meshgrid(x, y)
     w_samples = int((fwhm / size) * n_samples)
     center = int(n_samples/2)
     index = np.array([(-1)**(i+1)*np.ceil(i/2) for i in range(1, n_leds)])
@@ -166,11 +167,11 @@ def led_array(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e-3,
             index_2d.append((idx1, idx2))
             
     positions = [(center, center)] + ((center, center) + np.asarray(index_2d)*spacing*n_samples/(size)).tolist()
-    for idx, (mu_x, mu_y) in zip(index, positions): # positions are modelled as the mean of the gaussian
-        out = a*gauss_2d_fwhm(x, y, mu_x, mu_y, w_samples)
+    for idx, (mu_x, mu_y) in zip(index_2d, positions): # positions are modelled as the mean of the gaussian
+        out = a*gauss_2d_fwhm(xx, yy, mu_x, mu_y, w_samples, w_samples)
         yield idx, out
 
-def propagate_fft2(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
+def propagate_fft_2d(x_in, n_samples=5000, size=223e-3, lambda_0=650e-9, z=0.08):
     """Propagates a 2D field using the fast fourier transform."""
     
     # compute coordinates for x_out
@@ -200,15 +201,17 @@ def reconstruct_gs_2d(images, offset, target_resolution, n_iterations=3):
     hr_spectrum = fftshift(fft(fftshift(hr_object)))
     
     r_A_indices = images[0][1].shape[0]//2
-    hr_aperture_indices = get_circular_mask(target_resolution, target_resolution, (target_resolution//2, target_resolution//2), r_A_indices)
+    # hr_aperture_indices = get_circular_mask(target_resolution, target_resolution, (target_resolution//2, target_resolution//2), r_A_indices)
     lr_aperture_indices = get_circular_mask(images[0][1].shape[0], images[0][1].shape[0], (images[0][1].shape[0]//2, images[0][1].shape[0]//2), r_A_indices)
+    hr_aperture_indices = [lr_aperture_indices[0] + target_resolution//2 - r_A_indices, lr_aperture_indices[1] + target_resolution//2 - r_A_indices]
     sz = images[0][1].shape[0]
     for i in range(n_iterations):
 
         for (idx, img) in images:
             # step 1: generate low resolution target field from high resolution field spectrum according to band pass filter, shifted by plane wave illumination angle
-            sub_band = center_cut_2d(hr_spectrum, r_A_indices, (sz//2 - int(idx[0]*offset), sz//2 - int(idx[1]*offset)))
+            # sub_band = center_cut_2d(hr_spectrum, 2*r_A_indices, (sz//2 - int(idx[0]*offset), sz//2 - int(idx[1]*offset)))
             # sub_band = hr_spectrum[aperture_indices[0] - int(idx[0]*offset), aperture_indices[1] - int(idx[1]*offset)]
+            sub_band = hr_spectrum[target_resolution//2 - r_A_indices - int(idx[0]*offset):target_resolution//2 + r_A_indices - int(idx[0]*offset), target_resolution//2 - r_A_indices - int(idx[1]*offset):target_resolution//2 + r_A_indices - int(idx[1]*offset)]
             
             target = ifftshift(ifft2(ifftshift(sub_band)))
             
