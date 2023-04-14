@@ -44,22 +44,18 @@ def center_cut_2d(source, size, center=None):
     
     return source[int(center[0] - size//2):int(center[0] + size//2), int(center[1] - size//2):int(center[1] + size//2)]
 
-def get_circular_mask(N, size, center, radius):
+def get_circular_mask_cv(N, radius):
     """
-    Return a circular mask of size N with radius and center.
+    Use opencv to get a circular mask and return the indices within the mask.
     inputs:
-        N: number of points in each axis of mask
-        size: size of mask in meters
-        center: tuple of (x, y) center of circle in meters
-        radius: radius of circle in meters
+        N: width of the mask (square)
+        radius: radius of the circle to be masked
     returns:
-        Indices of the N x N mask that are within the circle, suitable for indexing.
+        tuple of indices within the mask
     """
     
-    x = np.linspace(-size/2, size/2, N)
-    y = np.linspace(-size/2, size/2, N)
-    xx, yy = np.meshgrid(x, y)
-    mask = (xx - center[0])**2 + (yy - center[1])**2 <= radius**2
+    mask = np.zeros((N, N), dtype=np.uint8)
+    mask = cv.circle(mask, (N//2, N//2), int(radius), 1, -1)
     return np.nonzero(mask)
 
 def image_2d(field, setup):
@@ -97,7 +93,7 @@ def image_2d(field, setup):
     
     # select sample indices for the aperture
     r_A_samples = int((A / L_a) * N / 2)
-    A_indices = get_circular_mask(N, L_a, (0, 0), A/2)
+    A_indices = get_circular_mask_cv(N, r_A_samples)
     
     # mask consists of circular section of the aperture field
     # compute aperture field and apply mask
@@ -197,25 +193,28 @@ def reconstruct_gs_2d(images, offset, target_resolution, n_iterations=3):
     """
     
     # generate high resolution base object
-    hr_object = cv.resize(images[0][1], (target_resolution, target_resolution), interpolation=cv.INTER_NEAREST)
-    hr_spectrum = fftshift(fft(fftshift(hr_object)))
+    hr_object = cv.resize(images[0][1], (target_resolution, target_resolution), interpolation=cv.INTER_LINEAR)
+    hr_spectrum = fftshift(fft2(fftshift(hr_object)))
     
     r_A_indices = images[0][1].shape[0]//2
-    # hr_aperture_indices = get_circular_mask(target_resolution, target_resolution, (target_resolution//2, target_resolution//2), r_A_indices)
-    lr_aperture_indices = get_circular_mask(images[0][1].shape[0], images[0][1].shape[0], (images[0][1].shape[0]//2, images[0][1].shape[0]//2), r_A_indices)
-    hr_aperture_indices = [lr_aperture_indices[0] + target_resolution//2 - r_A_indices, lr_aperture_indices[1] + target_resolution//2 - r_A_indices]
+
+    lr_aperture_indices = get_circular_mask_cv(images[0][1].shape[0], r_A_indices)
+    hr_aperture_indices = list(lr_aperture_indices)
+    hr_aperture_indices[0] = hr_aperture_indices[0] + target_resolution//2 - r_A_indices//2
+    hr_aperture_indices[1] = hr_aperture_indices[1] + target_resolution//2 - r_A_indices//2
+    hr_aperture_indices = tuple(hr_aperture_indices)
+    
     sz = images[0][1].shape[0]
     for i in range(n_iterations):
 
         for (idx, img) in images:
             # step 1: generate low resolution target field from high resolution field spectrum according to band pass filter, shifted by plane wave illumination angle
-            # sub_band = center_cut_2d(hr_spectrum, 2*r_A_indices, (sz//2 - int(idx[0]*offset), sz//2 - int(idx[1]*offset)))
-            # sub_band = hr_spectrum[aperture_indices[0] - int(idx[0]*offset), aperture_indices[1] - int(idx[1]*offset)]
+            
             sub_band = hr_spectrum[target_resolution//2 - r_A_indices - int(idx[0]*offset):target_resolution//2 + r_A_indices - int(idx[0]*offset), target_resolution//2 - r_A_indices - int(idx[1]*offset):target_resolution//2 + r_A_indices - int(idx[1]*offset)]
             
             target = ifftshift(ifft2(ifftshift(sub_band)))
             
-            # step 2: generate low resolution measurement using image function
+            # step 2: generate low resolution measurement
             # This is done in advance and passed in as an argument to this function
 
             # step 3: replace target amplitude with measurement amplitude
@@ -224,6 +223,8 @@ def reconstruct_gs_2d(images, offset, target_resolution, n_iterations=3):
             target = utils.polar_to_rect(a_lm, theta_l)
                     
             # step 4: replace high resolution spectrum band with updated target spectrum band
-            hr_spectrum[hr_aperture_indices[0] - int(idx[0]*offset), hr_aperture_indices[1] - int(idx[1]*offset)] = fftshift(fft(fftshift(target)))[lr_aperture_indices]
+            temp = fftshift(fft2(fftshift(target)))
+            
+            hr_spectrum[target_resolution//2 - r_A_indices - int(idx[0]*offset):target_resolution//2 + r_A_indices - int(idx[0]*offset), target_resolution//2 - r_A_indices - int(idx[1]*offset):target_resolution//2 + r_A_indices - int(idx[1]*offset)] = temp
 
     return hr_spectrum
