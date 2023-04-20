@@ -58,6 +58,20 @@ def get_circular_mask_cv(N, radius):
     mask = cv.circle(mask, (N//2, N//2), int(radius), 1, -1)
     return np.nonzero(mask)
 
+def spiral(n):
+    """
+    Generate a spiral of nxn points in a square.
+    inputs:
+        n: number of points to generate
+    """
+    x, y = 0, 0
+    dx, dy = 0, -1
+    for i in range(n**2):
+        yield (x, y)
+        if x == y or (x < 0 and x == -y) or (x > 0 and x == 1-y):
+            dx, dy = -dy, dx
+        x, y = x+dx, y+dy
+
 def image_2d(field, setup):
     '''
     Returns the image of a field through a 4F lens setup.
@@ -156,12 +170,8 @@ def led_array_2d(n_leds=32, n_samples=5000, size=223e-3, spacing=4e-3, fwhm=0.1e
     xx, yy = np.meshgrid(x, y)
     w_samples = int((fwhm / size) * n_samples)
     center = int(n_samples/2)
-    index = np.array([(-1)**(i+1)*np.ceil(i/2) for i in range(1, n_leds)])
-    index_2d = [(0,0)]
-    for idx1 in index:
-        for idx2 in index:
-            index_2d.append((idx1, idx2))
-            
+    index_2d = [p for p in spiral(n_leds)]
+                
     positions = [(center, center)] + ((center, center) + np.asarray(index_2d)*spacing*n_samples/(size)).tolist()
     for idx, (mu_x, mu_y) in zip(index_2d, positions): # positions are modelled as the mean of the gaussian
         out = a*gauss_2d_fwhm(xx, yy, mu_x, mu_y, w_samples, w_samples)
